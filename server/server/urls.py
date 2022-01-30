@@ -20,6 +20,8 @@ from django.views.static import serve
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include(('main.urls', 'main'), namespace='api')),
-    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT},name='static')
+    path('api/attendance/', include(('attendance.urls', 'attendance'), namespace='attendance')),
+    path('api/cashflow/', include(('cashflow.urls', 'cashflow'), namespace='cashflow')),
+    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}, name='static'),
+    re_path(r'^media/(?P<path>.*)/$', serve, {'document_root': settings.MEDIA_ROOT})
 ]

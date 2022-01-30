@@ -40,7 +40,7 @@
 					</el-date-picker>
 				</el-col>
 				<el-col :span="4">
-					<!-- 追加数据 -->
+					<!-- 追加数据按钮 -->
 					<el-tooltip content='add' placement="top" effect="light" :enterable="false">
 						<el-button type='danger' icon='el-icon-plus' circle @click="addDataDialogFormVisible = true"></el-button>
 					</el-tooltip>
@@ -62,9 +62,11 @@
 				</el-table-column>
 				<el-table-column type='index' label="#">
 				</el-table-column>
-				<el-table-column prop="date" label="日期" width="180">
+				<el-table-column prop="date" label="日期" width="120">
 				</el-table-column>
-				<el-table-column prop="usage" label="用途" width="700">
+				<el-table-column prop="client" label="取引先" width="180">
+				</el-table-column>
+				<el-table-column prop="usage" label="用途" width="500">
 				</el-table-column>
 				<el-table-column prop="amount" label="金額">
 				</el-table-column>
@@ -106,14 +108,39 @@
 				</el-form-item>
 				<el-form-item label="用途" prop="usage">
 					<el-col :span="20">
-						<el-input type="textarea" v-model='addData.usage'></el-input>
+						<el-input type="textarea" v-model='addData.usage' maxlength="50"></el-input>
+					</el-col>
+				</el-form-item>
+				<el-form-item label="取引先" prop="client">
+					<el-col :span="20">
+						<el-input v-model="addData.client"></el-input>
 					</el-col>
 				</el-form-item>
 				<el-form-item label="備考" prop="remark">
 					<el-col :span="20">
-						<el-input type="textarea" v-model='addData.remark'></el-input>
+						<el-input type="textarea" v-model='addData.remark' maxlength="100"></el-input>
 					</el-col>
 				</el-form-item>
+				
+				<el-form-item label="ファイル" prop="remark">
+					<el-col :span="20">
+						<!-- :on-preview="handlePreview" -->
+						<el-upload
+						  class="upload-demo"
+						  ref="upload"
+						  :action="actionURL"
+						  drag
+						  name='file'
+						  :limit="1"
+						  :on-remove="handleRemove"
+						  :file-list="fileList"
+						  :auto-upload="false">
+						  <i class="el-icon-upload"></i>
+						  <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+						</el-upload>
+					</el-col>
+				</el-form-item>
+
 			</el-form>
 		  <div slot="footer" class="dialog-footer">
 		    <el-button @click="closeDialog()">戻　る</el-button>
@@ -131,31 +158,17 @@
 				datevalue: '',
 				addDataDialogFormVisible: false,
 				formLabelWidth:'120px',
+				fileList: [],
 				addData:{
 					date:'',
 					amount:'',
 					type:'',
-					usage:'',
-					remark:''
+					usage:'', // 最大50个字符
+					remark:'',
+					client:''
 				},
-				tableData: [
-					{
-						id:123,
-						date:'2021/1/22',
-						usage:'赚钱',
-						type:1,
-						amount:200,
-						remark:'Speak something.lalallalala'
-					},
-					{
-						id:211,
-						date:'2021/1/19',
-						usage:'买菜',
-						type:0,
-						amount:0,
-						remark:'Speak something.lalallalala'
-					},
-				],
+				tableData: [],
+				actionURL : "",
 				// datepicker
 				pickerOptions: {
 					shortcuts: [{
@@ -182,14 +195,23 @@
 				},
 			}
 		},
-
+		created() {
+			this.getData()
+		},
 		methods:{
 			// 当日期选择器发生变化时，向服务器请求数据
 			dataChangeHandler(value) {
 				getData()
 			},
-			getData() {
-				// const {data:res} = await this.$http.post('/cashflow',data={start:this.start_date,end=this.end_date})
+			// 向服务器请求数据
+			async getData() {
+				if(this.start_date!==undefined&& this.end_date!==undefined){
+					const {data:res} = await this.$http.post('cashflow/tabledata',{start:this.start_date,end:this.end_date})
+					this.tableData = res.tableData
+				}else{
+					const {data:res} = await this.$http.post('cashflow/tabledata',{start:'', end:""})
+					this.tableData = res.tableData
+				}
 			},
 			// 用来处理每条数据的背景，根据数据的type来区分
 			tableRowClassName({row,rowIndex}) {
@@ -212,15 +234,38 @@
 				this.$refs['addDataFormRef'].resetFields()
 				this.addDataDialogFormVisible = false
 			},
-			addTableData(){
-				// this.$refs.addDataForm.resetFields()
-				this.$refs.addDataFormRef.resetFields()
+			// 提交数据
+			async addTableData(){
+				// 首先向服务器提交表单数据，
+				const {data:res} = await this.$http.post('cashflow/additem',this.addData)
+				this.actionURL =  "http://127.0.0.1:8000/api/cashflow/uploadfile/"+res.id
+				console.log(res)
+				if(res.code == 200){
+					
+					await this.$message.info("Uploaded data")
+					//如果提交成功在判断是否存在文件
+					console.log("filelist: "+this.fileList)
+					this.$refs['upload'].submit()
+					if(this.fileList.length != 0 ){
+						this.$message.info("Uploading file")
+						// 如果存在文件则提交文件
+						
+						console.log("提交数据URL:" + this.actionURL)
+						this.$refs['upload'].submit()
+					}
+				}else{
+					this.$message.error("Data upload failed")
+				}
 				
-				console.log(this.addData)
+				// this.$refs.addDataFormRef.resetFields()
 				this.addDataDialogFormVisible = false
+				this.getData()
 				return this.$message.success("add Tabel data")
-				
-			}
+			},
+			handleRemove(file,fileList){
+				var index = fileList.indexOf(file)
+				fileList.splice(index,1)
+			},
 		}
 	}
 </script>
