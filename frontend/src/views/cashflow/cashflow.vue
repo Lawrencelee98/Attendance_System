@@ -53,9 +53,12 @@
 			<el-table :data="tableData" style="width: 100%" :row-class-name="tableRowClassName">
 				<el-table-column type="expand">
 					<template slot-scope="props">
-						<el-form label-position="left" inline class="demo-table-expand" style="margin-left: 25px;">
+						<el-form label-position="left" inline class="demo-table-expand">
 							<el-form-item label="備考">
 								<span>{{ props.row.remark }}</span>
+							</el-form-item>
+							<el-form-item label="ファイル" v-if="props.row.hasfile==1">
+								<a :href="downloadurl" @click="downloadfile(props.row.id)"><el-button type="info" icon='el-icon-download' round></el-button></el-button></a>							
 							</el-form-item>
 						</el-form>
 					</template>
@@ -83,11 +86,20 @@
 					</template>
 				</el-table-column>
 			</el-table>
+			<el-pagination
+			  @size-change="handleSizeChange"
+			  @current-change="handleCurrentChange"
+			  :current-page="pageinfo.currentpage"
+			  :page-sizes="[15, 50, 100]"
+			  :page-size="pageinfo.pagesize"
+			  layout="total, sizes, prev, pager, next, jumper"
+			  :total="pageinfo.total">
+			</el-pagination>
 		</el-card>	
 		
 		<!-- 添加数据的对话框 -->
 		<el-dialog title="記録添加" :visible.sync="addDataDialogFormVisible" width="40%" @close="closeDialog()">
-			<el-form :model="addData" label-width="120px" ref="addDataFormRef">
+			<el-form :model="addData" label-width="120px" ref="addDataFormRef" :rules="rules">
 				<el-form-item label="タイプ" prop="type">
 					<el-col :span="20">
 						<el-select style="width: 100%;" v-model="addData.type" placeholder="">
@@ -144,7 +156,7 @@
 			</el-form>
 		  <div slot="footer" class="dialog-footer">
 		    <el-button @click="closeDialog()">戻　る</el-button>
-		    <el-button type="primary" @click="addTableData()">追　加</el-button>
+		    <el-button type="primary" @click="validateForm()">追　加</el-button>
 		  </div>
 		</el-dialog>
 	</div>
@@ -159,13 +171,19 @@
 				addDataDialogFormVisible: false,
 				formLabelWidth:'120px',
 				fileList: [],
+				downloadurl: "",
 				addData:{
 					date:'',
 					amount:'',
 					type:'',
-					usage:'', // 最大50个字符
+					usage:'', 
 					remark:'',
 					client:''
+				},
+				pageinfo:{
+					pagesize:15,
+					total:0,
+					currentpage:1
 				},
 				tableData: [],
 				actionURL : "",
@@ -193,6 +211,27 @@
 						}
 					}]
 				},
+				rules:{
+					amount:[{type:'number', required:true, trigger:'blur'}],
+					usage:[
+							{required:true, trigger:'blur'},
+							{max:50, message:"max length is 50",trigger:'blur'}
+					],
+					remark:[
+							{required:true, trigger:'blur'},
+							{max:100, message:"max length is 100", trigger:'blur'}
+					],
+					client:[
+							{required:true, trigger:'blur'},
+							{max:50, message:"max length is 50",trigger:'blur'}
+					],
+					date:[
+						 { type: 'date', required: true, trigger: 'blur' }
+					],
+					type:[
+						 { required: true, trigger: 'blur' },
+					]
+				}
 			}
 		},
 		created() {
@@ -206,11 +245,13 @@
 			// 向服务器请求数据
 			async getData() {
 				if(this.start_date!==undefined&& this.end_date!==undefined){
-					const {data:res} = await this.$http.post('cashflow/tabledata',{start:this.start_date,end:this.end_date})
+					const {data:res} = await this.$http.post('cashflow/tabledata',{start:this.start_date,end:this.end_date, page:this.pageinfo})
 					this.tableData = res.tableData
+					this.pageinfo.total = res.total
 				}else{
-					const {data:res} = await this.$http.post('cashflow/tabledata',{start:'', end:""})
+					const {data:res} = await this.$http.post('cashflow/tabledata',{start:'', end:"", page: this.pageinfo})
 					this.tableData = res.tableData
+					this.pageinfo.total = res.total
 				}
 			},
 			// 用来处理每条数据的背景，根据数据的type来区分
@@ -234,25 +275,28 @@
 				this.$refs['addDataFormRef'].resetFields()
 				this.addDataDialogFormVisible = false
 			},
+			validateForm(){
+				this.$refs['addDataFormRef'].validate((valid)=>{
+					if(valid){
+						this.addTableData()
+					}else{
+						return false
+					}
+				})
+			},
 			// 提交数据
 			async addTableData(){
+
+
 				// 首先向服务器提交表单数据，
 				const {data:res} = await this.$http.post('cashflow/additem',this.addData)
 				this.actionURL =  "http://127.0.0.1:8000/api/cashflow/uploadfile/"+res.id
 				console.log(res)
 				if(res.code == 200){
-					
 					await this.$message.info("Uploaded data")
 					//如果提交成功在判断是否存在文件
-					console.log("filelist: "+this.fileList)
+					console.log("提交数据URL:" + this.actionURL)
 					this.$refs['upload'].submit()
-					if(this.fileList.length != 0 ){
-						this.$message.info("Uploading file")
-						// 如果存在文件则提交文件
-						
-						console.log("提交数据URL:" + this.actionURL)
-						this.$refs['upload'].submit()
-					}
 				}else{
 					this.$message.error("Data upload failed")
 				}
@@ -266,6 +310,21 @@
 				var index = fileList.indexOf(file)
 				fileList.splice(index,1)
 			},
+			handleSizeChange(pagesize){
+				console.log("change pagesize to "+pagesize)
+				this.pageinfo.currentpage = 1
+				this.pageinfo.pagesize = pagesize
+				this.getData()
+			},
+			handleCurrentChange(currentpage){
+				console.log("change currentpage to "+currentpage)
+				this.pageinfo.currentpage = currentpage
+				this.getData()
+			},
+			async downloadfile(id){
+				// await this.$http.get('cashflow/downloadfile/'+id)
+				this.downloadurl = 'http://127.0.0.1:8000/api/cashflow/downloadfile/'+id
+			}
 		}
 	}
 </script>
@@ -317,4 +376,17 @@
 	.el-table .success-row {
 		background: #c8f5a3;
 	}
+	.demo-table-expand {
+		font-size: large;
+	}
+	.demo-table-expand label {
+		width: 90px;
+		color: #99a9bf;
+		}
+	.demo-table-expand .el-form-item {
+		margin-right: 0;
+		margin-bottom: 10px;
+		width: 100%;
+		
+	}	
 </style>

@@ -1,10 +1,11 @@
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, Http404, FileResponse
 from django.shortcuts import render
 import os
 import bson
 import json
 from .models import *
 from django.conf import settings
+from django.core.paginator import Paginator
 # Create your views here.
 '''
     index = models.AutoField(primary_key=True)
@@ -23,7 +24,7 @@ def addItem(request):
         date = datetime.strptime(req['date'], '%Y-%m-%dT%H:%M:%S.%fZ')
         type = req['type']
         amount = req['amount']
-        remark = req['remark'],
+        remark = req['remark']
         client = req['client']
 
         record = CashRecord.objects.create(
@@ -46,19 +47,73 @@ def addItem(request):
 def getData(request):
 
     data = json.loads(request.body)
+    # 用于存储模型查询出来的数据
+    records = []
+    # 用于存储将要返回的数据
+    response = []
+    # 将上传上来的JSON对象变成字典
+    pageinfo = data['page']
+    # 上传上来的pagesize
+    pagesize = pageinfo['pagesize']
+    # 上传上来的当前页数
+    currentpage = pageinfo['currentpage']
+    # 用于存储查询到的所有条目数
+    totalpage = 0
+
+    # 如果没有指定日期范围
     if data['start']=='' and data['end']=='':
-        records = CashRecord.objects.all().order_by("-date")
-        response = []
+        record_all = CashRecord.objects.all().order_by("-date")
+        totalpage = len(record_all)
+        pageinator = Paginator(record_all, pagesize)
+
+        # 获取当前页数的数据
+        try:
+            records = pageinator.page(currentpage)
+        except Exception as error:
+            print(error)
+
         for item in records:
+            hasfile = 0
+            if item.file != '':
+                hasfile = 1
             response.append({'id': item.index,
                              'date': item.date,
                              'usage': item.usage,
                              'type': item.type,
                              'amount': item.amount,
                              'remark': item.remark,
-                             'client': item.client
+                             'client': item.client,
+                             'hasfile': hasfile
                              })
-        return JsonResponse({'tableData':response}, safe=False)
+    # 如果有指定日期的话
+    elif data['start'] != '' and data['end'] != '':
+        start_date = data['start']
+        end_date = data['end']
+        record_all = CashRecord.objects.filter(date__range=[start_date, end_date])
+
+        totalpage = len(record_all)
+        paginator = Paginator(record_all, pagesize)
+
+        # 获取当前页数的数据
+        try:
+            records = paginator.page(currentpage)
+        except Exception as error:
+            print(error)
+
+        for item in records:
+            hasfile = 0
+            if item.file != '':
+                hasfile = 1
+            response.append({'id': item.index,
+                             'date': item.date,
+                             'usage': item.usage,
+                             'type': item.type,
+                             'amount': item.amount,
+                             'remark': item.remark,
+                             'client': item.client,
+                             'hasfile': hasfile
+                             })
+    return JsonResponse({'tableData': response, 'total': totalpage}, safe=False)
 # Article.objects.filter(pub_date__range=[startdate, enddate])
 
 
@@ -83,7 +138,7 @@ def uploadfile(request, index):
     user_id = '61f54c0cca1e7af8f8f0f0e6'
 
     # 生成对应用户下的文件夹，没有的话创建
-    file_path = os.path.join(settings.BASE_DIR, 'media/'+user_id)
+    file_path = os.path.join(settings.BASE_DIR, 'media', user_id)
     if not os.path.exists(file_path):
         os.makedirs(file_path)
 
@@ -92,14 +147,32 @@ def uploadfile(request, index):
 
     # 有了文件名之后就可以生成保存的完整路径
     fullfilepath = os.path.join(file_path, filename)
-
+    print("fullfillpath:"+fullfilepath)
+    print("test")
     # 写入数据
     with open(fullfilepath, 'wb') as fw:
         for ck in file.chunks():
             fw.write(ck)
 
     # 根据伪静态的id来查找对应的数据，将数据保存的模型里
-    cashrecord = CashRecord.objects.filter(index=index)
+    cashrecord = CashRecord.objects.filter(index=index).first()
     cashrecord.file = fullfilepath
-
+    cashrecord.save()
+    print(len(fullfilepath))
+    print("cashrecord:" ,cashrecord.file)
     return JsonResponse({"code": 200})
+
+
+def downloadfile(request, index):
+    record = CashRecord.objects.filter(index=index).first()
+    filepath = record.file
+    try:
+        response = FileResponse(open(filepath, 'rb'))
+        response['content_type'] = "application/octet-stream"
+        response['Content-Disposition'] = 'attachment; filename=' + filepath.split('\\')[-1]
+        print(filepath.split('\\')[-1])
+        return response
+    except Exception:
+        raise Http404
+
+    return HttpResponse("download")
