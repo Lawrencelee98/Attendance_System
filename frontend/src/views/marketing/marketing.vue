@@ -1,31 +1,13 @@
 <template>
-	<div class='cashflow'>
+	<div class='marketing'>
 		<!-- 当日收支 -->
 		<el-row :gutter="20">
 			<!-- 当前收入 -->
 			<el-col :span="8">
 				<el-card shadow='always'>
 					<div class='contant'>
-						<div class='topbox'>本日収入</div>
-						<div class='income'>+ {{income}}円</div>
-					</div>
-				</el-card>
-			</el-col>
-			<!-- 本日支出 -->
-			<el-col :span="8">
-				<el-card shadow='always'>
-					<div class="contant">
-						<div class='topbox'>本日支出</div>
-						<div class='expenses'>- {{expenses}}円</div>
-					</div>
-				</el-card>
-			</el-col>
-			<!-- 本日余剰 -->
-			<el-col :span="8">
-				<el-card shadow='always'>
-					<div class="contant">
-						<div class="topbox">本日余剰</div>
-						<div class='rest'>{{income-expenses}}円</div>
+						<div class='topbox'>本日営業数</div>
+						<div class='income'>{{projectnum}}</div>
 					</div>
 				</el-card>
 			</el-col>
@@ -50,16 +32,13 @@
 		</el-card>
 		<!-- 表格数据 -->
 		<el-card class='table' :body-style="{padding:'12px'}">
-			<el-table :data="tableData" style="width: 100%" :row-class-name="tableRowClassName">
+			<el-table :data="tableData" style="width: 100%" >
 				<el-table-column type="expand">
 					<template slot-scope="props">
 						<el-form label-position="left" inline class="demo-table-expand">
 							<el-form-item label="備考">
 								<span>{{ props.row.remark }}</span>
-							</el-form-item>
-							<el-form-item label="ファイル" v-if="props.row.hasfile==1">
-								<a :href="downloadurl" @click="downloadfile(props.row.id)"><el-button type="info" icon='el-icon-download' round></el-button></el-button></a>							
-							</el-form-item>
+							</el-form-item>						
 						</el-form>
 					</template>
 				</el-table-column>
@@ -69,9 +48,9 @@
 				</el-table-column>
 				<el-table-column prop="client" label="取引先" width="180">
 				</el-table-column>
-				<el-table-column prop="usage" label="用途" width="500">
+				<el-table-column prop="projectname" label="項目名" width="500">
 				</el-table-column>
-				<el-table-column prop="amount" label="金額">
+				<el-table-column prop="budget" label="予算">
 				</el-table-column>
 				<el-table-column>
 					<template slot-scope="props">
@@ -100,25 +79,13 @@
 		<!-- 添加数据的对话框 -->
 		<el-dialog title="記録添加" :visible.sync="addDataDialogFormVisible" width="40%" @close="closeDialog()">
 			<el-form :model="addData" label-width="120px" ref="addDataFormRef" :rules="rules">
-				<el-form-item label="タイプ" prop="type">
-					<el-col :span="20">
-						<el-select style="width: 100%;" v-model="addData.type" placeholder="">
-							<el-option label="支出" value="0"></el-option>
-							<el-option label="収入" value="1"></el-option>
-						</el-select>
-					</el-col>
-				</el-form-item>
-				<el-form-item label="金額" prop="amount">
-					<el-col :span="20">
-						<el-input v-model="addData.amount"></el-input>
-					</el-col>
-				</el-form-item>
-				<el-form-item label="日付" prop="date">
+				<!-- 暂时日期是自动添加为当天的日期 -->
+<!-- 				<el-form-item label="日付" prop="date">
 					<el-col :span="20">
 						<el-date-picker v-model='addData.date' type="date" style="width: 100%;"></el-date-picker>
 					</el-col>
-				</el-form-item>
-				<el-form-item label="用途" prop="usage">
+				</el-form-item> -->
+				<el-form-item label="項目名" prop="projectname">
 					<el-col :span="20">
 						<el-input type="textarea" v-model='addData.usage' maxlength="50"></el-input>
 					</el-col>
@@ -128,31 +95,16 @@
 						<el-input v-model="addData.client"></el-input>
 					</el-col>
 				</el-form-item>
+				<el-form-item label="予算" prop="budget">
+					<el-col :span="20">
+						<el-input v-model="addData.amount"></el-input>
+					</el-col>
+				</el-form-item>
 				<el-form-item label="備考" prop="remark">
 					<el-col :span="20">
 						<el-input type="textarea" v-model='addData.remark' maxlength="100"></el-input>
 					</el-col>
 				</el-form-item>
-				
-				<el-form-item label="ファイル" prop="file">
-					<el-col :span="20">
-						<!-- :on-preview="handlePreview" -->
-						<el-upload
-						  class="upload-demo"
-						  ref="upload"
-						  :action="actionURL"
-						  drag
-						  name='file'
-						  :limit="1"
-						  :on-remove="handleRemove"
-						  :file-list="fileList"
-						  :auto-upload="false">
-						  <i class="el-icon-upload"></i>
-						  <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-						</el-upload>
-					</el-col>
-				</el-form-item>
-
 			</el-form>
 		  <div slot="footer" class="dialog-footer">
 		    <el-button @click="closeDialog()">戻　る</el-button>
@@ -173,12 +125,12 @@
 				fileList: [],
 				downloadurl: "",
 				addData:{
-					date:'',
-					amount:'',
-					type:'',
-					usage:'', 
+					// date:'',
+					budget:'',
+					projectname:'', 
 					remark:'',
-					client:''
+					client:'',
+					method:''
 				},
 				pageinfo:{
 					pagesize:15,
@@ -254,14 +206,6 @@
 					this.pageinfo.total = res.total
 				}
 			},
-			// 用来处理每条数据的背景，根据数据的type来区分
-			tableRowClassName({row,rowIndex}) {
-				if (row.type==0) {
-					return 'warning-row';
-				} else {
-					return 'success-row';
-				}
-			},
 			// 与服务器交互，删除数据
 			deleteTableData(id){
 				console.log('delete:'+id)
@@ -286,17 +230,11 @@
 			},
 			// 提交数据
 			async addTableData(){
-
-
 				// 首先向服务器提交表单数据，
-				const {data:res} = await this.$http.post('cashflow/additem',this.addData)
-				this.actionURL =  "http://127.0.0.1:8000/api/cashflow/uploadfile/"+res.id
+				const {data:res} = await this.$http.post('marketing/additem',this.addData)
 				console.log(res)
 				if(res.code == 200){
-					await this.$message.info("Uploaded data")
-					//如果提交成功在判断是否存在文件
-					console.log("提交数据URL:" + this.actionURL)
-					this.$refs['upload'].submit()
+					await this.$message.success("Uploaded data")
 				}else{
 					this.$message.error("Data upload failed")
 				}

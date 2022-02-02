@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'attendance',
     "corsheaders",
     'cashflow',
+    'marketing',
 ]
 
 MIDDLEWARE = [

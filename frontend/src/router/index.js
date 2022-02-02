@@ -31,7 +31,12 @@ const routes = [
         path: '/cashflow',
         name: 'Cashflow', //入出金管理
         component: ()=> import('../views/cashflow/cashflow.vue')
-      }
+      },
+	  {
+		  path: '/marketing',
+		  name: 'marketing',
+		  component: ()=> import('../views/marketing/marketing.vue')
+	  }
 	  ]
   }
 ]

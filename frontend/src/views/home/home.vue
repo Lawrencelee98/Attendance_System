@@ -26,6 +26,10 @@
 						<i class='el-icon-s-claim'></i>
 						<span style="font-size: larger;" slot='title'>入出金管理</span>
 					</el-menu-item>
+					<el-menu-item index='/marketing'>
+						<i class='el-icon-s-claim'></i>
+						<span style="font-size: larger;" slot='title'>営業記録</span>
+					</el-menu-item>
 				</el-menu>
 				
 			</el-aside>
