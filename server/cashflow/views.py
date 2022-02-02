@@ -61,7 +61,7 @@ def getData(request):
     totalpage = 0
 
     # 如果没有指定日期范围
-    if data['start']=='' and data['end']=='':
+    if data['start'] == '' and data['end'] == '':
         record_all = CashRecord.objects.all().order_by("-date")
         totalpage = len(record_all)
         pageinator = Paginator(record_all, pagesize)
@@ -87,9 +87,10 @@ def getData(request):
                              })
     # 如果有指定日期的话
     elif data['start'] != '' and data['end'] != '':
-        start_date = data['start']
-        end_date = data['end']
-        record_all = CashRecord.objects.filter(date__range=[start_date, end_date])
+        start_date = datetime.strptime(data['start'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        end_date = datetime.strptime(data['end'], '%Y-%m-%dT%H:%M:%S.%fZ')
+
+        record_all = CashRecord.objects.filter(date__range=[start_date, end_date]).order_by("-date")
 
         totalpage = len(record_all)
         paginator = Paginator(record_all, pagesize)

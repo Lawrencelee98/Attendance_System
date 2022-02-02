@@ -22,6 +22,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/attendance/', include(('attendance.urls', 'attendance'), namespace='attendance')),
     path('api/cashflow/', include(('cashflow.urls', 'cashflow'), namespace='cashflow')),
+    path('api/marketing/', include(('marketing.urls', 'marketing'), namespace='marketing')),
     re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}, name='static'),
     re_path(r'^media/(?P<path>.*)/$', serve, {'document_root': settings.MEDIA_ROOT})
 ]

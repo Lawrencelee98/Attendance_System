@@ -2,12 +2,21 @@
 	<div class='marketing'>
 		<!-- 当日收支 -->
 		<el-row :gutter="20">
-			<!-- 当前收入 -->
+			<!-- 当前营业个数 -->
 			<el-col :span="8">
 				<el-card shadow='always'>
 					<div class='contant'>
 						<div class='topbox'>本日営業数</div>
-						<div class='income'>{{projectnum}}</div>
+						<div class='income'>{{todayInfo.number}}</div>
+					</div>
+				</el-card>
+			</el-col>
+			<!-- 当前收入 -->
+			<el-col :span="8">
+				<el-card shadow='always'>
+					<div class='contant'>
+						<div class='topbox'>本日見積金額</div>
+						<div class='income'>{{todayInfo.account}}</div>
 					</div>
 				</el-card>
 			</el-col>
@@ -44,18 +53,20 @@
 				</el-table-column>
 				<el-table-column type='index' label="#">
 				</el-table-column>
-				<el-table-column prop="date" label="日期" width="120">
+				<el-table-column prop="date" label="日期" >
 				</el-table-column>
-				<el-table-column prop="client" label="取引先" width="180">
+				<el-table-column prop="client" label="取引先">
 				</el-table-column>
-				<el-table-column prop="projectname" label="項目名" width="500">
+				<el-table-column prop="projectname" label="項目名" >
 				</el-table-column>
 				<el-table-column prop="budget" label="予算">
+				</el-table-column>
+				<el-table-column prop="response" label="担当者">
 				</el-table-column>
 				<el-table-column>
 					<template slot-scope="props">
 						<el-tooltip content='edit' placement="top" effect="light" :enterable="false">
-							<el-button type='primary' icon='el-icon-edit' size='mini' @click="editTableData(props.row.id)">
+							<el-button type='primary' icon='el-icon-edit' size='mini' @click="editTableData(props.row)">
 							</el-button>
 						</el-tooltip>
 						<el-tooltip content='delete' placement="top" effect="light" :enterable="false">
@@ -85,9 +96,19 @@
 						<el-date-picker v-model='addData.date' type="date" style="width: 100%;"></el-date-picker>
 					</el-col>
 				</el-form-item> -->
+				<el-form-item label="担当者" prop="responsible">
+					<el-col :span="20">
+						<el-input v-model="addData.responsible"></el-input>
+					</el-col>
+				</el-form-item>
+				<el-form-item label="営業手段" prop="method">
+					<el-col :span="20">
+						<el-input v-model="addData.method"></el-input>
+					</el-col>
+				</el-form-item>
 				<el-form-item label="項目名" prop="projectname">
 					<el-col :span="20">
-						<el-input type="textarea" v-model='addData.usage' maxlength="50"></el-input>
+						<el-input v-model='addData.projectname'></el-input>
 					</el-col>
 				</el-form-item>
 				<el-form-item label="取引先" prop="client">
@@ -97,7 +118,7 @@
 				</el-form-item>
 				<el-form-item label="予算" prop="budget">
 					<el-col :span="20">
-						<el-input v-model="addData.amount"></el-input>
+						<el-input v-model="addData.budget" ></el-input>
 					</el-col>
 				</el-form-item>
 				<el-form-item label="備考" prop="remark">
@@ -111,27 +132,81 @@
 		    <el-button type="primary" @click="validateForm()">追　加</el-button>
 		  </div>
 		</el-dialog>
+		<!-- 编辑数据的对话框 -->
+		<el-dialog title="記録編集" :visible.sync="editDataDialogFormVisible" width="40%" @close="closeEditDialog()">
+			<el-form :model="editData" label-width="120px" ref="editDataFormRef" :rules="rules">
+				<!-- 暂时日期是自动添加为当天的日期 -->
+<!-- 				<el-form-item label="日付" prop="date">
+					<el-col :span="20">
+						<el-date-picker v-model='addData.date' type="date" style="width: 100%;"></el-date-picker>
+					</el-col>
+				</el-form-item> -->
+				<el-form-item label="担当者" prop="responsible">
+					<el-col :span="20">
+						<el-input v-model="editData.responsible"></el-input>
+					</el-col>
+				</el-form-item>
+				<el-form-item label="営業手段" prop="method">
+					<el-col :span="20">
+						<el-input v-model="editData.method"></el-input>
+					</el-col>
+				</el-form-item>
+				<el-form-item label="項目名" prop="projectname">
+					<el-col :span="20">
+						<el-input v-model='editData.projectname'></el-input>
+					</el-col>
+				</el-form-item>
+				<el-form-item label="取引先" prop="client">
+					<el-col :span="20">
+						<el-input v-model="editData.client"></el-input>
+					</el-col>
+				</el-form-item>
+				<el-form-item label="予算" prop="budget">
+					<el-col :span="20">
+						<el-input v-model="editData.budget"></el-input>
+					</el-col>
+				</el-form-item>
+				<el-form-item label="備考" prop="remark">
+					<el-col :span="20">
+						<el-input type="textarea" v-model='editData.remark' maxlength="100"></el-input>
+					</el-col>
+				</el-form-item>
+			</el-form>
+		  <div slot="footer" class="dialog-footer">
+			<el-button @click="closeEditDialog()">戻　る</el-button>
+			<el-button type="primary" @click="validateEditForm()">追　加</el-button>
+		  </div>
+		</el-dialog>
 	</div>
 </template>
 <script>
 	export default {
 		data() {
+			var checkbudget=(rule, value, cb)=>{
+				const regbudget = /^[0-9]/
+				if(regbudget.test(value)){
+					return cb()
+				}
+				cb(new Error("Please input right budget"))
+			}
 			return {
-				income: '6666',
-				expenses: '1111',
+				todayInfo:{},
 				datevalue: '',
 				addDataDialogFormVisible: false,
+				editDataDialogFormVisible:false,
 				formLabelWidth:'120px',
 				fileList: [],
 				downloadurl: "",
 				addData:{
 					// date:'',
+					responsible:'',
 					budget:'',
 					projectname:'', 
 					remark:'',
 					client:'',
 					method:''
 				},
+				editData:{},
 				pageinfo:{
 					pagesize:15,
 					total:0,
@@ -164,25 +239,27 @@
 					}]
 				},
 				rules:{
-					amount:[{type:'number', required:true, trigger:'blur'}],
-					usage:[
+					budget:[{required:true, trigger:'blur'},{validator:checkbudget, trigger:'blur'}],
+					projectname:[
 							{required:true, trigger:'blur'},
 							{max:50, message:"max length is 50",trigger:'blur'}
 					],
 					remark:[
 							{required:true, trigger:'blur'},
-							{max:100, message:"max length is 100", trigger:'blur'}
+							{max:200, message:"max length is 100", trigger:'blur'}
 					],
 					client:[
 							{required:true, trigger:'blur'},
 							{max:50, message:"max length is 50",trigger:'blur'}
 					],
-					date:[
-						 { type: 'date', required: true, trigger: 'blur' }
+					method:[
+							{required:true, trigger:'blur'},
+							{max:50, message:"max length is 50",trigger:'blur'}
 					],
-					type:[
-						 { required: true, trigger: 'blur' },
-					]
+					responsible:[
+							{required:true, trigger:'blur'},
+							{max:20, message:"max length is 50",trigger:'blur'}
+					],
 				}
 			}
 		},
@@ -192,28 +269,41 @@
 		methods:{
 			// 当日期选择器发生变化时，向服务器请求数据
 			dataChangeHandler(value) {
-				getData()
+				this.getData()
 			},
 			// 向服务器请求数据
 			async getData() {
-				if(this.start_date!==undefined&& this.end_date!==undefined){
-					const {data:res} = await this.$http.post('cashflow/tabledata',{start:this.start_date,end:this.end_date, page:this.pageinfo})
+				if(this.datevalue[0]!==undefined&& this.datevalue[1]!==undefined){
+					const {data:res} = await this.$http.post('marketing/tabledata',{start:this.datevalue[0],end:this.datevalue[1], page:this.pageinfo})
 					this.tableData = res.tableData
 					this.pageinfo.total = res.total
+					this.todayInfo = res.todayinfo
 				}else{
-					const {data:res} = await this.$http.post('cashflow/tabledata',{start:'', end:"", page: this.pageinfo})
+					const {data:res} = await this.$http.post('marketing/tabledata',{start:'', end:"", page: this.pageinfo})
 					this.tableData = res.tableData
 					this.pageinfo.total = res.total
+					this.todayInfo = res.todayinfo
 				}
 			},
 			// 与服务器交互，删除数据
-			deleteTableData(id){
+			async deleteTableData(id){
 				console.log('delete:'+id)
-				return this.$message.success(id)
+				const {data:res} = await this.$http.post('marketing/delete',{id:id})
+				if(res.code==200){
+					this.getData()
+					return this.$message.success("Delete data success")
+				}else{
+					return this.$message.error("Delete data failed")
+				}
 			},
-			// 与服务器交互，编辑数据
-			editTableData(id){
-				return console.log('edit:'+id)
+			// 打开编辑对话框，编辑数据
+			editTableData(data){
+				this.editDataDialogFormVisible = true
+				this.editData = data
+			},
+			// 关闭编辑对话框
+			closeEditDialog(){
+				this.editDataDialogFormVisible = false
 			},
 			closeDialog(){
 				this.$refs['addDataFormRef'].resetFields()
@@ -228,11 +318,30 @@
 					}
 				})
 			},
+			validateEditForm(){
+				this.$refs['editDataFormRef'].validate((valid)=>{
+					if(valid){
+						this.uploadData()
+					}else{
+						return false
+					}
+				})
+			},
+			async uploadData(){
+				console.log("upload data:"+this.editData)
+				const {data:res} = await this.$http.post('marketing/update', this.editData)
+				if(res.code==200){
+					this.closeEditDialog()
+					this.getData()
+					return this.$message.success("Update Data Success")
+				}else{
+					this.$message.error("Update Data Failed")
+				}
+			},
 			// 提交数据
 			async addTableData(){
 				// 首先向服务器提交表单数据，
 				const {data:res} = await this.$http.post('marketing/additem',this.addData)
-				console.log(res)
 				if(res.code == 200){
 					await this.$message.success("Uploaded data")
 				}else{

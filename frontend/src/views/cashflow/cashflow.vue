@@ -240,12 +240,13 @@
 		methods:{
 			// 当日期选择器发生变化时，向服务器请求数据
 			dataChangeHandler(value) {
-				getData()
+				this.getData()
 			},
 			// 向服务器请求数据
 			async getData() {
-				if(this.start_date!==undefined&& this.end_date!==undefined){
-					const {data:res} = await this.$http.post('cashflow/tabledata',{start:this.start_date,end:this.end_date, page:this.pageinfo})
+				if(this.datevalue[0]!==undefined&& this.datevalue[1]!==undefined){
+					console.log(this.datevalue)
+					const {data:res} = await this.$http.post('cashflow/tabledata',{start:this.datevalue[0],end:this.datevalue[1], page:this.pageinfo})
 					this.tableData = res.tableData
 					this.pageinfo.total = res.total
 				}else{

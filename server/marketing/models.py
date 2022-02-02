@@ -9,6 +9,7 @@ class MarketingRecord(models.Model):
     client = models.CharField(max_length=50)
     method = models.CharField(max_length=50)
     remark = models.CharField(max_length=200)
+    responsible = models.CharField(max_length=20)
 
     class Meta:
         db_table = 't_market_record'
