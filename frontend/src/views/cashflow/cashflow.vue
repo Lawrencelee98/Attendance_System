@@ -7,7 +7,7 @@
 				<el-card shadow='always'>
 					<div class='contant'>
 						<div class='topbox'>本日収入</div>
-						<div class='income'>+ {{income}}円</div>
+						<div class='income'>+ {{today.income}}円</div>
 					</div>
 				</el-card>
 			</el-col>
@@ -16,7 +16,7 @@
 				<el-card shadow='always'>
 					<div class="contant">
 						<div class='topbox'>本日支出</div>
-						<div class='expenses'>- {{expenses}}円</div>
+						<div class='expenses'>- {{today.expense}}円</div>
 					</div>
 				</el-card>
 			</el-col>
@@ -25,7 +25,7 @@
 				<el-card shadow='always'>
 					<div class="contant">
 						<div class="topbox">本日余剰</div>
-						<div class='rest'>{{income-expenses}}円</div>
+						<div class='rest'>{{today.income-today.expense}}円</div>
 					</div>
 				</el-card>
 			</el-col>
@@ -76,7 +76,7 @@
 				<el-table-column>
 					<template slot-scope="props">
 						<el-tooltip content='edit' placement="top" effect="light" :enterable="false">
-							<el-button type='primary' icon='el-icon-edit' size='mini' @click="editTableData(props.row.id)">
+							<el-button type='primary' icon='el-icon-edit' size='mini' @click="editTableData(props.row)">
 							</el-button>
 						</el-tooltip>
 						<el-tooltip content='delete' placement="top" effect="light" :enterable="false">
@@ -115,7 +115,7 @@
 				</el-form-item>
 				<el-form-item label="日付" prop="date">
 					<el-col :span="20">
-						<el-date-picker v-model='addData.date' type="date" style="width: 100%;"></el-date-picker>
+						<el-date-picker v-model='addData.date' type="date" style="width: 100%;" value-format="yyyy-MM-dd"></el-date-picker>
 					</el-col>
 				</el-form-item>
 				<el-form-item label="用途" prop="usage">
@@ -152,11 +152,71 @@
 						</el-upload>
 					</el-col>
 				</el-form-item>
-
 			</el-form>
 		  <div slot="footer" class="dialog-footer">
 		    <el-button @click="closeDialog()">戻　る</el-button>
 		    <el-button type="primary" @click="validateForm()">追　加</el-button>
+		  </div>
+		</el-dialog>
+		<!-- 修改数据的对话框 -->
+		<el-dialog title="記録編集" :visible.sync="editDataDialogFormVisible" width="40%" @close="closeEditDialog()">
+			<el-form :model="editData" label-width="120px" ref="editDataFormRef" :rules="rules">
+				<el-form-item label="タイプ" prop="type">
+					<el-col :span="20">
+						<el-select style="width: 100%;" v-model="editData.type==0?'支出':'收入'" placeholder="" >
+							<el-option label="支出" value="0"></el-option>
+							<el-option label="収入" value="1"></el-option>
+						</el-select>
+					</el-col>
+				</el-form-item>
+				<el-form-item label="金額" prop="amount">
+					<el-col :span="20">
+						<el-input v-model="editData.amount"></el-input>
+					</el-col>
+				</el-form-item>
+				<el-form-item label="日付" prop="date">
+					<el-col :span="20">
+						<el-date-picker v-model='editData.date' type="date" style="width: 100%;" value-format="yyyy-MM-dd" ></el-date-picker>
+					</el-col>
+				</el-form-item>
+				<el-form-item label="用途" prop="usage">
+					<el-col :span="20">
+						<el-input type="textarea" v-model='editData.usage' maxlength="50"></el-input>
+					</el-col>
+				</el-form-item>
+				<el-form-item label="取引先" prop="client">
+					<el-col :span="20">
+						<el-input v-model="editData.client"></el-input>
+					</el-col>
+				</el-form-item>
+				<el-form-item label="備考" prop="remark">
+					<el-col :span="20">
+						<el-input type="textarea" v-model='editData.remark' maxlength="100"></el-input>
+					</el-col>
+				</el-form-item>
+				
+				<el-form-item label="ファイル" prop="file">
+					<el-col :span="20">
+						<!-- :on-preview="handlePreview" -->
+						<el-upload
+						  class="upload-demo"
+						  ref="update"
+						  :action="actionURL"
+						  drag
+						  name='file'
+						  :limit="1"
+						  :on-remove="handleRemove"
+						  :file-list="fileList"
+						  :auto-upload="false">
+						  <i class="el-icon-upload"></i>
+						  <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+						</el-upload>
+					</el-col>
+				</el-form-item>
+			</el-form>
+		  <div slot="footer" class="dialog-footer">
+		    <el-button @click="closeEditDialog()">戻　る</el-button>
+		    <el-button type="primary" @click="validateEditForm()">編　集</el-button>
 		  </div>
 		</el-dialog>
 	</div>
@@ -164,11 +224,17 @@
 <script>
 	export default {
 		data() {
+			var checkamount=(rule, value, cb)=>{
+				const regamount = /^[0-9]/
+				if(regamount.test(value)){
+					return cb()
+				}
+				cb(new Error("Please input right amount"))
+			}
 			return {
-				income: '6666',
-				expenses: '1111',
 				datevalue: '',
 				addDataDialogFormVisible: false,
+				editDataDialogFormVisible:false,
 				formLabelWidth:'120px',
 				fileList: [],
 				downloadurl: "",
@@ -180,11 +246,13 @@
 					remark:'',
 					client:''
 				},
+				editData:{},
 				pageinfo:{
 					pagesize:15,
 					total:0,
 					currentpage:1
 				},
+				today:{},
 				tableData: [],
 				actionURL : "",
 				// datepicker
@@ -212,7 +280,8 @@
 					}]
 				},
 				rules:{
-					amount:[{type:'number', required:true, trigger:'blur'}],
+					amount:[{required:true, trigger:'blur'},
+							{validator:checkamount, trigger:'blur'}],
 					usage:[
 							{required:true, trigger:'blur'},
 							{max:50, message:"max length is 50",trigger:'blur'}
@@ -226,7 +295,7 @@
 							{max:50, message:"max length is 50",trigger:'blur'}
 					],
 					date:[
-						 { type: 'date', required: true, trigger: 'blur' }
+						 { required: true, trigger: 'blur' }
 					],
 					type:[
 						 { required: true, trigger: 'blur' },
@@ -249,10 +318,12 @@
 					const {data:res} = await this.$http.post('cashflow/tabledata',{start:this.datevalue[0],end:this.datevalue[1], page:this.pageinfo})
 					this.tableData = res.tableData
 					this.pageinfo.total = res.total
+					this.today = res.today
 				}else{
 					const {data:res} = await this.$http.post('cashflow/tabledata',{start:'', end:"", page: this.pageinfo})
 					this.tableData = res.tableData
 					this.pageinfo.total = res.total
+					this.today = res.today
 				}
 			},
 			// 用来处理每条数据的背景，根据数据的type来区分
@@ -264,18 +335,31 @@
 				}
 			},
 			// 与服务器交互，删除数据
-			deleteTableData(id){
-				console.log('delete:'+id)
-				return this.$message.success(id)
+			async deleteTableData(id){
+				const {data:res} = await this.$http.post('cashflow/delete',{'id':id})
+				if(res.code == 200){
+					this.$message.success("delete data successful")
+					this.getData()
+				}else{
+					this.$message.error("delete data failed")
+				}
 			},
 			// 与服务器交互，编辑数据
-			editTableData(id){
-				return console.log('edit:'+id)
+			async editTableData(row){
+				this.editData = row
+				this.editDataDialogFormVisible = true	
 			},
+			// 关闭添加项目对话框
 			closeDialog(){
 				this.$refs['addDataFormRef'].resetFields()
 				this.addDataDialogFormVisible = false
 			},
+			// 关闭编辑项目对话框
+			closeEditDialog(){
+				this.$refs['editDataFormRef'].resetFields()
+				this.editDataDialogFormVisible = false
+			},
+			// 验证添加数据表单
 			validateForm(){
 				this.$refs['addDataFormRef'].validate((valid)=>{
 					if(valid){
@@ -285,40 +369,61 @@
 					}
 				})
 			},
+			// 验证编辑数据表单
+			validateEditForm(){
+				this.$refs['editDataFormRef'].validate((valid)=>{
+					if(valid){
+						this.submitEditData()
+					}else{
+						return false
+					}
+				})
+			},
+			// 提交更新数据
+			async submitEditData(){
+				const {data:res} = await this.$http.post('cashflow/update', this.editData)
+				this.actionURL =  "http://127.0.0.1:8000/api/cashflow/uploadfile/"+this.editData.id
+				this.$refs['update'].submit()
+				if(res.code == 200){
+					this.$message.success("upload data successful")
+					this.closeEditDialog()
+					this.getData()
+				}else{
+					this.$message.error("upload data failed")
+				}
+			},
 			// 提交数据
 			async addTableData(){
-
-
 				// 首先向服务器提交表单数据，
+				console.log(this.addData)
 				const {data:res} = await this.$http.post('cashflow/additem',this.addData)
 				this.actionURL =  "http://127.0.0.1:8000/api/cashflow/uploadfile/"+res.id
-				console.log(res)
+				// console.log(res)
 				if(res.code == 200){
 					await this.$message.info("Uploaded data")
 					//如果提交成功在判断是否存在文件
-					console.log("提交数据URL:" + this.actionURL)
+					// console.log("提交数据URL:" + this.actionURL)
 					this.$refs['upload'].submit()
 				}else{
 					this.$message.error("Data upload failed")
 				}
 				
 				// this.$refs.addDataFormRef.resetFields()
-				this.addDataDialogFormVisible = false
+				this.closeDialog()
 				this.getData()
-				return this.$message.success("add Tabel data")
 			},
 			handleRemove(file,fileList){
 				var index = fileList.indexOf(file)
 				fileList.splice(index,1)
 			},
 			handleSizeChange(pagesize){
-				console.log("change pagesize to "+pagesize)
+				// console.log("change pagesize to "+pagesize)
 				this.pageinfo.currentpage = 1
 				this.pageinfo.pagesize = pagesize
 				this.getData()
 			},
 			handleCurrentChange(currentpage){
-				console.log("change currentpage to "+currentpage)
+				// console.log("change currentpage to "+currentpage)
 				this.pageinfo.currentpage = currentpage
 				this.getData()
 			},

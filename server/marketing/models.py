@@ -13,13 +13,3 @@ class MarketingRecord(models.Model):
 
     class Meta:
         db_table = 't_market_record'
-    '''
-    				addData:{
-					date:'',
-					budget:'',
-					projectname:'', 
-					remark:'',
-					client:'',
-					method:''
-				},
-    '''

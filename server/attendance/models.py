@@ -16,16 +16,6 @@ class Record(models.Model):
         return f"{self.item_id}:{self.item_date}"
 
 
-class User(models.Model):
-    user_id = models.CharField(max_length=50, unique=True)
-    user_name = models.CharField(max_length=20)
-    user_pwd = models.CharField(max_length=20)
-
-    class Meta:
-        db_table = "t_user"
-
-    def __str__(self):
-        return f"{self.user_id}:{self.user_name}"
 
 
 

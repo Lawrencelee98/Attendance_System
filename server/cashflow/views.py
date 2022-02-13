@@ -7,26 +7,17 @@ from .models import *
 from django.conf import settings
 from django.core.paginator import Paginator
 # Create your views here.
-'''
-    index = models.AutoField(primary_key=True)
-    usage = models.CharField(max_length=50)
-    type = models.IntegerField()
-    amount = models.FloatField()
-    remark = models.CharField(max_length=100)
-    file = models.FileField(upload_to='file')
-'''
 
 
 def addItem(request):
     if request.method == 'POST':
         req = json.loads(request.body)
         usage = req['usage']
-        date = datetime.strptime(req['date'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        date = datetime.strptime(req['date'], '%Y-%m-%d')
         type = req['type']
         amount = req['amount']
         remark = req['remark']
         client = req['client']
-
         record = CashRecord.objects.create(
             usage=usage,
             type=int(type),
@@ -59,6 +50,17 @@ def getData(request):
     currentpage = pageinfo['currentpage']
     # 用于存储查询到的所有条目数
     totalpage = 0
+    # 当日的收支情况
+    todayInfo = {'income': 0 , 'expense': 0}
+
+    # 计算当日的收支
+    today_records = CashRecord.objects.filter(date=datetime.now().date())
+    for today_record in today_records:
+        if today_record.type == 0:
+            todayInfo['expense'] += today_record.amount
+        else:
+            todayInfo['income'] += today_record.amount
+
 
     # 如果没有指定日期范围
     if data['start'] == '' and data['end'] == '':
@@ -114,7 +116,7 @@ def getData(request):
                              'client': item.client,
                              'hasfile': hasfile
                              })
-    return JsonResponse({'tableData': response, 'total': totalpage}, safe=False)
+    return JsonResponse({'tableData': response, 'total': totalpage, 'today':todayInfo}, safe=False)
 # Article.objects.filter(pub_date__range=[startdate, enddate])
 
 
@@ -129,7 +131,8 @@ def uploadfile(request, index):
     '''
     # 首先获取上传上来的文件
     file = request.FILES.get('file', None)
-
+    if file is None:
+        return
     # 在这里判断一下文件的大小是否合规，如果太大有可能是恶意文件
     # 在前端也判断一下文件的大小,如果文件大于10个字节则放弃上传
     if file.size > 1024*1024*10:
@@ -149,7 +152,6 @@ def uploadfile(request, index):
     # 有了文件名之后就可以生成保存的完整路径
     fullfilepath = os.path.join(file_path, filename)
     print("fullfillpath:"+fullfilepath)
-    print("test")
     # 写入数据
     with open(fullfilepath, 'wb') as fw:
         for ck in file.chunks():
@@ -176,4 +178,42 @@ def downloadfile(request, index):
     except Exception:
         raise Http404
 
-    return HttpResponse("download")
+
+
+# 2022/2/3 update
+def delete(request):
+    data = json.loads(request.body)
+    try:
+        index = data['id']
+        CashRecord.objects.filter(index=index).delete()
+        return JsonResponse({'code':200})
+    except Exception as error:
+        print(error)
+        return JsonResponse({'code':500})
+
+
+def update(request):
+    if request.method == 'POST':
+        try:
+            req = json.loads(request.body)
+            index = req['id']
+            usage = req['usage']
+            date = datetime.strptime(req['date'], '%Y-%m-%d')
+            type = req['type']
+            amount = req['amount']
+            remark = req['remark']
+            client = req['client']
+
+            CashRecord.objects.filter(index=index).update(
+                usage=usage,
+                type=int(type),
+                amount=round(float(amount), 2),
+                remark=remark,
+                date=date,
+                client=client
+            )
+            return JsonResponse({'code': 200})
+        except Exception as error:
+            print(error)
+    return JsonResponse({'code':500})
+

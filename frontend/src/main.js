@@ -8,11 +8,17 @@ import './assets/global.css'
 import axios from 'axios'
 
 // axios.defaults.baseURL = "http://192.168.0.163:8000/api/"
-// axios.defaults.baseURL = "http://127.0.0.1:8000/api/"
-axios.defaults.baseURL = "http://iw.nyanbox.top/api/"
+axios.defaults.baseURL = "http://127.0.0.1:8000/api/"
+// axios.defaults.baseURL = "http://iw.nyanbox.top/api/"
 
 Vue.config.productionTip = false
 Vue.use(ElementUI);
+
+//axios 请求拦截器
+// axios.interceptors.request.use(config => {
+// 	config.headers.Authorization = window.sessionStorage.getItem('token');
+// 	return config;
+// })
 
 Vue.prototype.$http = axios
 
