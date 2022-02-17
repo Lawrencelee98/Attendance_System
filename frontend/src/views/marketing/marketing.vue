@@ -55,13 +55,15 @@
 				</el-table-column>
 				<el-table-column prop="date" label="日期" >
 				</el-table-column>
+				<el-table-column prop="method" label="営業手段" >
+				</el-table-column>
 				<el-table-column prop="client" label="取引先">
 				</el-table-column>
 				<el-table-column prop="projectname" label="項目名" >
 				</el-table-column>
 				<el-table-column prop="budget" label="予算">
 				</el-table-column>
-				<el-table-column prop="response" label="担当者">
+				<el-table-column prop="responsible" label="担当者">
 				</el-table-column>
 				<el-table-column>
 					<template slot-scope="props">
@@ -265,6 +267,7 @@
 		},
 		created() {
 			this.getData()
+			console.log(this.tableData)
 		},
 		methods:{
 			// 当日期选择器发生变化时，向服务器请求数据

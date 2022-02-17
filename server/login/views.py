@@ -30,3 +30,7 @@ def post(request):
     request.session['test'] = '123'
     print(request.session['test'])
     return HttpResponse("200")
+
+def register(request):
+    data = json.loads(request.body)
+    data['username']
