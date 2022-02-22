@@ -29,6 +29,7 @@ def getData(request):
         totalpage = 0
         marketing_num = 0 # 今天营业的次数
         marketing_account = 0 # 今天营业的预计金额
+        responseList = [] # 营业的担当者列表
 
         # 获取今天的营业数和预计营业额度
         try:
@@ -40,6 +41,22 @@ def getData(request):
                 marketing_account += todayItem.budget
         except Exception as error:
             print(error)
+
+        try:
+            responselist = []
+            responsible = MarketingRecord.objects.all().values('responsible')
+            for res in responsible:
+                if res['responsible'] not in responselist:
+                    responselist.append(res['responsible'])
+            for res in responselist:
+                responseList.append({'label': res,'value':res})
+
+
+            print(responseList)
+
+        except Exception as error:
+            print(error)
+
 
         # 如果没有指定日期范围
         if data['start'] == '' and data['end'] == '':
@@ -89,7 +106,9 @@ def getData(request):
                                  })
         return JsonResponse({'tableData': response,
                              'total': totalpage,
-                             'todayinfo': {'number':marketing_num,'account':marketing_account}},
+                             'todayinfo': {'number':marketing_num,'account':marketing_account},
+                             'responsibleList': responseList
+                             },
                             safe=False)
 
     return HttpResponse("200")

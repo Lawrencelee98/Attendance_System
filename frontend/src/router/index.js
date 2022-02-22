@@ -4,18 +4,35 @@ import VueRouter from 'vue-router'
 Vue.use(VueRouter)
 
 const routes = [
+//   {
+//     path: '/',
+//     redirect: '/login'
+//   },
+//   {
+//     path: '/login',
+//     name: 'login',
+//     // route level code-splitting
+//     // this generates a separate chunk (about.[hash].js) for this route
+//     // which is lazy-loaded when the route is visited.
+//     component: () => import('../views/login/login.vue')
+//   },
   {
     path: '/',
-    redirect: '/login'
+    redirect: '/home1'
   },
   {
-    path: '/login',
-    name: 'login',
+    path: '/home1',
+    name: 'home1',
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
-    component: () => import('../views/login/login.vue')
+    component: () => import('../views/home/home1.vue')
   },
+  {
+	name: '404',
+	path: '/404',
+	component: () => import('../views/404/404.vue')
+  }, 
   {
 	  path: '/home',
 	  name: 'home',
@@ -36,8 +53,12 @@ const routes = [
 		  path: '/marketing',
 		  name: 'marketing',
 		  component: ()=> import('../views/marketing/marketing.vue')
-	  }
+	  },
 	  ]
+  },
+  {
+	path: '*',
+	redirect:'/404'
   }
 ]
 const router = new VueRouter({

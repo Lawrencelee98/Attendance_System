@@ -8,7 +8,7 @@ class MarketingRecord(models.Model):
     projectname = models.CharField(max_length=50)
     client = models.CharField(max_length=50)
     method = models.CharField(max_length=50)
-    remark = models.CharField(max_length=200)
+    remark = models.CharField(max_length=2000)
     responsible = models.CharField(max_length=20)
 
     class Meta:

@@ -56,6 +56,7 @@ export default{
 		}
 	},
 	create(){
+		window.location.reload();
 		getData();
 	},
 	methods:{

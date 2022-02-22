@@ -100,7 +100,14 @@
 				</el-form-item> -->
 				<el-form-item label="担当者" prop="responsible">
 					<el-col :span="20">
-						<el-input v-model="addData.responsible"></el-input>
+						<el-select v-model="addData.responsible" filterable style='width:100%' placeholder=''>
+							    <el-option
+									v-for="item in responseList"
+									:key="item.value"
+									:label="item.label"
+									:value="item.value">
+								</el-option>
+						</el-select>
 					</el-col>
 				</el-form-item>
 				<el-form-item label="営業手段" prop="method">
@@ -145,7 +152,14 @@
 				</el-form-item> -->
 				<el-form-item label="担当者" prop="responsible">
 					<el-col :span="20">
-						<el-input v-model="editData.responsible"></el-input>
+						<el-select v-model="editData.responsible" filterable style='width:100%' placeholder=''>
+							    <el-option
+									v-for="item in responseList"
+									:key="item.value"
+									:label="item.label"
+									:value="item.value">
+								</el-option>
+						</el-select>
 					</el-col>
 				</el-form-item>
 				<el-form-item label="営業手段" prop="method">
@@ -199,6 +213,7 @@
 				formLabelWidth:'120px',
 				fileList: [],
 				downloadurl: "",
+				responseList : [],
 				addData:{
 					// date:'',
 					responsible:'',
@@ -281,11 +296,13 @@
 					this.tableData = res.tableData
 					this.pageinfo.total = res.total
 					this.todayInfo = res.todayinfo
+					this.responseList = res.responsibleList
 				}else{
 					const {data:res} = await this.$http.post('marketing/tabledata',{start:'', end:"", page: this.pageinfo})
 					this.tableData = res.tableData
 					this.pageinfo.total = res.total
 					this.todayInfo = res.todayinfo
+					this.responseList = res.responsibleList
 				}
 			},
 			// 与服务器交互，删除数据
