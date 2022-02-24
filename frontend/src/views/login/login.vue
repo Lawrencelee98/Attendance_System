@@ -17,8 +17,9 @@
       </el-form-item>
       <!-- 按钮 -->
       <el-form-item >
-        <el-button type='primary' @click='login'>登录</el-button>
-        <el-button type='info' @click="resetLoginForm">重置</el-button>
+        <el-button type='primary' @click='login'>ログイン</el-button>
+		<el-button type='success' @click="goRegister">ユーザー登録</el-button>
+        <el-button type='info' @click="resetLoginForm">リセット</el-button>
       </el-form-item>
     </el-form>
     </div>
@@ -62,13 +63,17 @@ export default {
 				
 			})
 		},
+		goRegister(){
+			this.$router.push('/register')
+		},
 		async authentication(){
 			const {data:res} = await this.$http.post('login/', this.loginForm);
 			if(res.code!==200){
-				this.$message.error('登录失败');
+				this.$message.error('ログインできません');
 			}else{
 				window.sessionStorage.setItem('token',res.token)
-				this.$message.success('登陆成功');
+				window.sessionStorage.setItem('user',res.nickname)
+				this.$message.success('ログイン成功');
 				// 跳转到home里
 				this.$router.push('/home')
 			}

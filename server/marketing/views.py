@@ -4,6 +4,7 @@ from django.shortcuts import render
 from .models import *
 import json
 from datetime import datetime
+import jsonpickle
 
 '''
 class MarketingRecord(models.Model):
@@ -17,6 +18,11 @@ class MarketingRecord(models.Model):
     responsible = models.CharField(max_length=20)
 '''
 
+class CurrentUser(object):
+    def __init__(self,username,nickname):
+        self.username = username
+        self.nickname = nickname
+
 # Create your views here.
 def getData(request):
     if request.method == 'POST':
@@ -29,7 +35,9 @@ def getData(request):
         totalpage = 0
         marketing_num = 0 # 今天营业的次数
         marketing_account = 0 # 今天营业的预计金额
-        responseList = [] # 营业的担当者列表
+        #responseList = [] # 营业的担当者列表
+
+
 
         # 获取今天的营业数和预计营业额度
         try:
@@ -42,20 +50,20 @@ def getData(request):
         except Exception as error:
             print(error)
 
-        try:
-            responselist = []
-            responsible = MarketingRecord.objects.all().values('responsible')
-            for res in responsible:
-                if res['responsible'] not in responselist:
-                    responselist.append(res['responsible'])
-            for res in responselist:
-                responseList.append({'label': res,'value':res})
-
-
-            print(responseList)
-
-        except Exception as error:
-            print(error)
+    # 这一部分用于生成担当者列表
+        # try:
+        #     responselist = []
+        #     responsible = MarketingRecord.objects.all().values('responsible')
+        #     for res in responsible:
+        #         if res['responsible'] not in responselist:
+        #             responselist.append(res['responsible'])
+        #     for res in responselist:
+        #         responseList.append({'label': res,'value':res})
+        #
+        #     print(responseList)
+        #
+        # except Exception as error:
+        #     print(error)
 
 
         # 如果没有指定日期范围
@@ -106,10 +114,8 @@ def getData(request):
                                  })
         return JsonResponse({'tableData': response,
                              'total': totalpage,
-                             'todayinfo': {'number':marketing_num,'account':marketing_account},
-                             'responsibleList': responseList
-                             },
-                            safe=False)
+                             'todayinfo': {'number': marketing_num, 'account': marketing_account},
+                             })
 
     return HttpResponse("200")
 

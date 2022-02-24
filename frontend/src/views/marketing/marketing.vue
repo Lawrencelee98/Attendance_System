@@ -100,14 +100,7 @@
 				</el-form-item> -->
 				<el-form-item label="担当者" prop="responsible">
 					<el-col :span="20">
-						<el-select v-model="addData.responsible" filterable style='width:100%' placeholder=''>
-							    <el-option
-									v-for="item in responseList"
-									:key="item.value"
-									:label="item.label"
-									:value="item.value">
-								</el-option>
-						</el-select>
+						<el-input v-model="addData.responsible"></el-input>
 					</el-col>
 				</el-form-item>
 				<el-form-item label="営業手段" prop="method">
@@ -152,14 +145,7 @@
 				</el-form-item> -->
 				<el-form-item label="担当者" prop="responsible">
 					<el-col :span="20">
-						<el-select v-model="editData.responsible" filterable style='width:100%' placeholder=''>
-							    <el-option
-									v-for="item in responseList"
-									:key="item.value"
-									:label="item.label"
-									:value="item.value">
-								</el-option>
-						</el-select>
+						<el-input v-model="editData.responsible"></el-input>
 					</el-col>
 				</el-form-item>
 				<el-form-item label="営業手段" prop="method">
@@ -184,7 +170,7 @@
 				</el-form-item>
 				<el-form-item label="備考" prop="remark">
 					<el-col :span="20">
-						<el-input type="textarea" v-model='editData.remark' maxlength="100"></el-input>
+						<el-input type="textarea" v-model='editData.remark' maxlength="2000"></el-input>
 					</el-col>
 				</el-form-item>
 			</el-form>
@@ -213,7 +199,7 @@
 				formLabelWidth:'120px',
 				fileList: [],
 				downloadurl: "",
-				responseList : [],
+				responsibility: '',
 				addData:{
 					// date:'',
 					responsible:'',
@@ -263,7 +249,7 @@
 					],
 					remark:[
 							{required:true, trigger:'blur'},
-							{max:200, message:"max length is 100", trigger:'blur'}
+							{max:2000, message:"max length is 2000", trigger:'blur'}
 					],
 					client:[
 							{required:true, trigger:'blur'},
@@ -296,13 +282,17 @@
 					this.tableData = res.tableData
 					this.pageinfo.total = res.total
 					this.todayInfo = res.todayinfo
-					this.responseList = res.responsibleList
+					this.responsibility = window.sessionStorage.getItem('user')
+					this.editData.responsible = this.responsibility
+					this.addData.responsible = this.responsibility
 				}else{
 					const {data:res} = await this.$http.post('marketing/tabledata',{start:'', end:"", page: this.pageinfo})
 					this.tableData = res.tableData
 					this.pageinfo.total = res.total
 					this.todayInfo = res.todayinfo
-					this.responseList = res.responsibleList
+					this.responsibility = window.sessionStorage.getItem('user')
+					this.editData.responsible = this.responsibility
+					this.addData.responsible = this.responsibility
 				}
 			},
 			// 与服务器交互，删除数据

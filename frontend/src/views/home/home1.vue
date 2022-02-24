@@ -5,8 +5,8 @@
 				<img src="../../assets/logo.png" style="height: 100%;">
 				<span>My Dashboard</span>
 			</div>
-			<el-button type='info'>
-				退出
+			<el-button type='info' @click='logout'>
+				ログアウト
 			</el-button>
 		</el-header>
 		<el-container>
@@ -70,6 +70,12 @@ export default{
 		// 导航菜单的展开与折叠按钮
 		toggleCollapse(){
 			this.isCollapse = !this.isCollapse
+		},
+		// 退出登录
+		logout(){
+			windows.sessionStorage.clear();
+			this.$router.next('/login');
+			alert("logout")
 		},
 	}
 }

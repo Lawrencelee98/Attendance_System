@@ -5,8 +5,8 @@
 				<img src="../../assets/logo.png" style="height: 100%;">
 				<span>My Dashboard</span>
 			</div>
-			<el-button type='info'>
-				退出
+			<el-button type='info' @click='logout'>
+				ログアウト
 			</el-button>
 		</el-header>
 		<el-container>
@@ -49,6 +49,9 @@ export default{
 			activeIndex: "/attendance",
 		}
 	},
+	created() {
+		
+	},
 	methods:{
 		saveNavState(){
 			
@@ -57,11 +60,15 @@ export default{
 		toggleCollapse(){
 			this.isCollapse = !this.isCollapse
 		},
+		logout(){
+			window.sessionStorage.clear();
+			this.$router.push('/login')
+		}
 	}
 }
 </script>
 
-<style>
+<style scoped>
 	/* 注意!!! 这里用类选择器 */
 	.el-header{
 		background-color: #FFFFFF;
