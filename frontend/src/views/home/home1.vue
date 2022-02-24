@@ -9,7 +9,7 @@
 				ログアウト
 			</el-button>
 		</el-header>
-		<el-container>
+		<el-container style='height: 100vh;'>
 			<el-row style='margin-top:5rem' gutter='20'>
             <router-link to="/attendance">
                     <el-col :span="8">

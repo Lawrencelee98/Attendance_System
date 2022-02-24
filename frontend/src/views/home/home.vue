@@ -1,6 +1,6 @@
 <template>
 	<el-container class='home-container'>
-		<el-header>
+		<el-header style='height: 8vh;'>
 			<div>
 				<img src="../../assets/logo.png" style="height: 100%;">
 				<span>My Dashboard</span>
@@ -31,10 +31,14 @@
 						<i class='el-icon-s-claim'></i>
 						<span v-if='!isCollapse' style="font-size: larger;" slot='title'>営業記録</span>
 					</el-menu-item>
+					<el-menu-item index='/invoice'>
+						<i class='el-icon-s-claim'></i>
+						<span v-if='!isCollapse' style="font-size: larger;" slot='title'>請求書</span>
+					</el-menu-item>
 				</el-menu>
 				
 			</el-aside>
-			<el-main>
+			<el-main style='height: 92vh; overflow: scroll;'>
 				<router-view></router-view>
 			</el-main>
 		</el-container>
@@ -69,6 +73,9 @@ export default{
 </script>
 
 <style scoped>
+	.home-container{
+		height: 100%;
+	}
 	/* 注意!!! 这里用类选择器 */
 	.el-header{
 		background-color: #FFFFFF;

@@ -59,6 +59,11 @@ const routes = [
 		  name: 'marketing',
 		  component: ()=> import('../views/marketing/marketing.vue')
 	  },
+	  {
+		path: '/invoice',
+		name: 'invoice',
+		component: ()=> import('../views/invoice/invoice.vue')
+	  },
 	  ]
   },
   {
