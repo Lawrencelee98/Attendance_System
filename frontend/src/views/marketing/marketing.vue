@@ -41,12 +41,12 @@
 		</el-card>
 		<!-- 表格数据 -->
 		<el-card class='table' :body-style="{padding:'12px'}">
-			<el-table :data="tableData" style="width: 100%" >
+			<el-table :data="tableData" style="width: 100%"  :row-class-name="tableRowClassName">
 				<el-table-column type="expand">
 					<template slot-scope="props">
 						<el-form label-position="left" inline class="demo-table-expand">
 							<el-form-item label="備考">
-								<span>{{ props.row.remark }}</span>
+								<p style=" word-break:break-all;">{{ props.row.remark }}</p>
 							</el-form-item>						
 						</el-form>
 					</template>
@@ -64,6 +64,11 @@
 				<el-table-column prop="budget" label="予算">
 				</el-table-column>
 				<el-table-column prop="responsible" label="担当者">
+				</el-table-column>
+				<el-table-column prop="status" label="状態">
+					<template slot-scope="props">
+						{{statusTranslate(props.row.status)}}
+					</template>
 				</el-table-column>
 				<el-table-column>
 					<template slot-scope="props">
@@ -125,7 +130,7 @@
 				</el-form-item>
 				<el-form-item label="備考" prop="remark">
 					<el-col :span="20">
-						<el-input type="textarea" v-model='addData.remark' maxlength="100"></el-input>
+						<el-input type="textarea" v-model='addData.remark' maxlength="2000" :autosize="{minRows:5}"></el-input>
 					</el-col>
 				</el-form-item>
 			</el-form>
@@ -143,6 +148,15 @@
 						<el-date-picker v-model='addData.date' type="date" style="width: 100%;"></el-date-picker>
 					</el-col>
 				</el-form-item> -->
+				<el-form-item label="状態" >
+					<el-col :span="20">
+						<el-select v-model="editData.status" style="width: 100%;">
+							<el-option label='相談中' value=0></el-option>
+							<el-option label='成功' value=1></el-option>
+							<el-option label='失敗' value=2></el-option>
+						</el-select>
+					</el-col>
+				</el-form-item>
 				<el-form-item label="担当者" prop="responsible">
 					<el-col :span="20">
 						<el-input v-model="editData.responsible"></el-input>
@@ -170,13 +184,13 @@
 				</el-form-item>
 				<el-form-item label="備考" prop="remark">
 					<el-col :span="20">
-						<el-input type="textarea" v-model='editData.remark' maxlength="2000"></el-input>
+						<el-input type="textarea" v-model='editData.remark' maxlength="2000"  :autosize="{minRows:5}"></el-input>
 					</el-col>
 				</el-form-item>
 			</el-form>
 		  <div slot="footer" class="dialog-footer">
 			<el-button @click="closeEditDialog()">戻　る</el-button>
-			<el-button type="primary" @click="validateEditForm()">追　加</el-button>
+			<el-button type="primary" @click="validateEditForm()">保　存</el-button>
 		  </div>
 		</el-dialog>
 	</div>
@@ -310,6 +324,8 @@
 			editTableData(data){
 				this.editDataDialogFormVisible = true
 				this.editData = data
+				console.log(this.editData)
+				// this.editData.status = this.statusTranslate(data.stuats)
 			},
 			// 关闭编辑对话框
 			closeEditDialog(){
@@ -381,6 +397,24 @@
 			async downloadfile(id){
 				// await this.$http.get('cashflow/downloadfile/'+id)
 				this.downloadurl = 'http://127.0.0.1:8000/api/cashflow/downloadfile/'+id
+			},
+			statusTranslate(num){
+				if(num == 0){
+					return "相談中";
+				}else if(num == 1){
+					return "成功";
+				}else{
+					return "失敗"
+				}
+			},
+			tableRowClassName({row, index}){
+				if (row.status === 1) {
+				  return 'success-row';
+				} else if (row.status === 2) {
+				  return 'warning-row';
+				}else{
+					return ''
+				}
 			}
 		}
 	}

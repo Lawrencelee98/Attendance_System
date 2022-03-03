@@ -10,6 +10,7 @@ class MarketingRecord(models.Model):
     method = models.CharField(max_length=50)
     remark = models.TextField()
     responsible = models.CharField(max_length=20)
+    status = models.IntegerField()
 
     class Meta:
         db_table = 't_market_record'

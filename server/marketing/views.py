@@ -41,8 +41,8 @@ def getData(request):
 
         # 获取今天的营业数和预计营业额度
         try:
-            print(datetime.today())
-            print(datetime.now().date())
+            # print(datetime.today())
+            # print(datetime.now().date())
             todayItems = MarketingRecord.objects.filter(date=datetime.today().date())
             marketing_num = len(todayItems)
             for todayItem in todayItems:
@@ -87,6 +87,7 @@ def getData(request):
                                  'remark': item.remark,
                                  'method': item.method,
                                  'responsible': item.responsible,
+                                 'status': item.status,
                                  })
         # 如果有指定日期的话
         elif data['start'] != '' and data['end'] != '':
@@ -111,6 +112,7 @@ def getData(request):
                                  'remark': item.remark,
                                  'method': item.method,
                                  'responsible': item.responsible,
+                                 'status': item.status,
                                  })
         return JsonResponse({'tableData': response,
                              'total': totalpage,
@@ -140,6 +142,7 @@ def addItem(request):
         remark = req['remark']
         client = req['client']
         method = req['method']
+        status = 0
         try:
             MarketingRecord.objects.create(
                 budget = budget,
@@ -147,7 +150,8 @@ def addItem(request):
                 remark = remark,
                 client = client,
                 method = method,
-                responsible = responsible
+                responsible = responsible,
+                status = status,
             )
         except Exception as error:
             print(error)
@@ -179,7 +183,7 @@ def updateItem(request):
     responsible = data['responsible']
     remark = data['remark']
     budget = data['budget']
-
+    status = data['status']
     try:
         record = MarketingRecord.objects.filter(index=id).first()
         record.client = client
@@ -188,6 +192,7 @@ def updateItem(request):
         record.responsible = responsible
         record.remark = remark
         record.budget = budget
+        record.status = status
         record.save()
         return JsonResponse({'code':200})
     except Exception as error:

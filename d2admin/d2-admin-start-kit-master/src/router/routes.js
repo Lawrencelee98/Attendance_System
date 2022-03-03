@@ -19,7 +19,7 @@ const frameIn = [
         meta: {
           auth: true
         },
-        component: ()=> import('../views/attendance/attendance.vue')
+       component: _import('demo/page2')
       },
       // 演示页面
       {
@@ -29,7 +29,7 @@ const frameIn = [
           title: 'Attendance',
           auth: true
         },
-        component: _import('demo/page1')
+         component: ()=> import('../views/attendance/attendance.vue')
       },
       {
         path: 'page2',
