@@ -9,7 +9,7 @@
 			<el-col :span="6">
 				<div class='title'><h4>取引先</h4></div>
 				<div>
-					<el-input clearable placeholder="取引先"></el-input>
+					<el-input clearable placeholder="取引先" v-model="invoice.client"></el-input>
 				</div>				
 			</el-col>
 			<el-col :span="2">
@@ -30,7 +30,7 @@
 		 	<el-col :span="6">
 		 		<div class='title'><h4>請求書番号</h4></div>
 		 		<div>
-		 			<el-input clearable placeholder="請求書番号"></el-input>
+		 			<el-input clearable placeholder="請求書番号" v-model="invoice.invoice_num"></el-input>
 		 		</div>				
 		 	</el-col>
 		 </el-row>
@@ -55,7 +55,7 @@
 		 	<el-col :span="6">
 		 		<div class='title'><h4>件名</h4></div>
 		 		<div>
-		 			<el-input clearable placeholder="件名"></el-input>
+		 			<el-input clearable placeholder="件名" v-model="invoice.title"></el-input>
 		 		</div>				
 		 	</el-col>
 		 </el-row>
@@ -69,7 +69,7 @@
 			<el-col :span="6">
 				<div class='title'><h4>氏名</h4></div>
 				<div>
-					<el-input clearable placeholder="氏名"></el-input>
+					<el-input clearable placeholder="氏名" v-model="invoice.name"></el-input>
 				</div>				
 			</el-col>
 			<el-col :span="6">
@@ -83,7 +83,7 @@
 			<el-col :span="6">
 				<div class='title'><h4>会社名</h4></div>
 				<div>
-					<el-input clearable placeholder="会社名"></el-input>
+					<el-input clearable placeholder="会社名" v-model="invoice.company_name"></el-input>
 				</div>				
 			</el-col>
 			<el-col :span="6">
@@ -107,13 +107,13 @@
 			<el-col :span="6">
 				<div class='title'><h4>住所</h4></div>
 				<div>
-					<el-input clearable placeholder="住所"></el-input>
+					<el-input clearable placeholder="住所" v-model="invoice.address"></el-input>
 				</div>				
 			</el-col>
 			<el-col :span="6">
 				<div class='title'><h4>ビル名・部屋番号</h4></div>
 				<div>
-					<el-input clearable placeholder="ビル名・部屋番号"></el-input>
+					<el-input clearable placeholder="ビル名・部屋番号" v-model="invoice.subaddress"></el-input>
 				</div>				
 			</el-col>
 		</el-row>
@@ -121,13 +121,13 @@
 			<el-col :span="6">
 				<div class='title'><h4>電話番号</h4></div>
 				<div>
-					<el-input clearable placeholder="電話番号"></el-input>
+					<el-input clearable placeholder="電話番号" v-model="invoice.tel"></el-input>
 				</div>				
 			</el-col>
 			<el-col :span="6">
 				<div class='title'><h4>FAX</h4></div>
 				<div>
-					<el-input clearable placeholder="FAX"></el-input>
+					<el-input clearable placeholder="FAX" v-model="invoice.fax"></el-input>
 				</div>				
 			</el-col>
 		</el-row>
@@ -135,7 +135,7 @@
 			<el-col :span="6">
 				<div class='title'><h4>メールアドレス</h4></div>
 				<div>
-					<el-input clearable placeholder="メールアドレス"></el-input>
+					<el-input clearable placeholder="メールアドレス" v-model="invoice.email"></el-input>
 				</div>				
 			</el-col>
 		</el-row>
@@ -241,7 +241,7 @@
 				  :rows="5"
 				  placeholder="振込先"
 				  style="width: 100%;"
-				  v-model="textarea">
+				  v-model="invoice.destination">
 				</el-input>
 			</el-col>
 		</el-row>
@@ -253,7 +253,7 @@
 				  :rows="5"
 				  placeholder="備考"
 				  style="width: 100%;"
-				  v-model="textarea">
+				  v-model="invoice.remark">
 				</el-input>
 			</el-col>
 		</el-row>
@@ -280,7 +280,9 @@ export default{
 	data(){
 		return{
 			addToggle: true,
-			invoice:{},
+			invoice:{
+				records:[]
+			},
 			tableData:[
 				{
 					title: 'hinmokumei',
@@ -296,6 +298,7 @@ export default{
 				unit: "",
 				unitprice:""
 			},
+			// price:0,
 			initnewitem:{
 				title: "",
 				amount: "1",
@@ -304,13 +307,25 @@ export default{
 			}
 		}
 	},
+	computed:{
+		price: function(){
+			// let unit = parseInt(this.newitem.unit,10)
+			// let unitprice = parseInt(this.newitem.unitprice,10)
+			
+			// return unit * unitprice
+			return this.newitem.amount * this.newitem.unitprice
+		}
+	},
 	methods:{
 		changeAddToggle(){
 			this.addToggle = !this.addToggle;
 		},
 		additem(){
+			this.newitem.price = this.price
 			this.tableData.push(this.newitem);
+			this.invoice.records.push(this.newitem)
 			this.newitem = this.initnewitem
+			console.log(this.invoice)
 		},
 		cancel(){
 			this.newitem = this.initnewitem
